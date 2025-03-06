@@ -118,12 +118,11 @@ func (i *itemRepository) GetAllItems(ctx context.Context) ([]*Item, error) {
 }
 
 /* ************************************************* */
-/* STEP 4-4: Store */
+/* STEP 4-4: Store Image */
 /* ************************************************* */
 // StoreImage stores an image and returns an error if any.
 // This package doesn't have a related interface for simplicity.
 func StoreImage(fileName string, image []byte) error {
 	// STEP 4-4: add an implementation to store an image
-
-	return nil
+	return os.WriteFile(fileName, image, 0644)
 }

@@ -1,6 +1,8 @@
 package app
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -104,8 +106,9 @@ func parseAddItemRequest(r *http.Request) (*AddItemRequest, error) {
 	// STEP 4-4: add an image field
 	f, _, err := r.FormFile("image") // get the image file
 	if err != nil {
-		return nil, errors.New("Failed to read form file") // return an error if the file is not found
+		return nil, errors.New("Failed to read image file") // return an error if the file is not found
 	}
+
 	defer f.Close() // close the file after the function ends
  
 	imageAsByteArray, err := io.ReadAll(f) // read the image file and convert it to a byte array
@@ -198,6 +201,9 @@ func (s *Handlers) AddItem(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+/* ************************************************* */
+/* STEP 4-4: Store Image */
+/* ************************************************* */
 // storeImage stores an image and returns the file path and an error if any.
 // this method calculates the hash sum of the image as a file name to avoid the duplication of a same file
 // and stores it in the image directory.
@@ -209,8 +215,15 @@ func (s *Handlers) storeImage(image []byte) (filePath string, err error) {
 	// - check if the image already exists
 	// - store image
 	// - return the image file path
+	hash := sha256.Sum256(image)	// calculate the hash sum of the image
+	filePath = hex.EncodeToString(hash[:]) + ".jpg" // use .jpg as the image format
+	hashedFilePath := filepath.Join(s.imgDirPath, filePath)
+	err = StoreImage(hashedFilePath, image)
+	if err != nil {
+		return "", err
+	}
+	return filePath, nil
 
-	return
 }
 
 type GetImageRequest struct {
