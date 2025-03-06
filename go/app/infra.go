@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
-	// STEP 5-1: uncomment this line
-	// _ "github.com/mattn/go-sqlite3"
 )
 
 var errImageNotFound = errors.New("image not found")
@@ -109,7 +107,7 @@ func (i *itemRepository) GetAllItems(ctx context.Context) ([]*Item, error) {
 	}
 
 	defer file.Close()
-	err:= json.NewDecoder(file).Decode(&items);
+	err:= json.NewDecoder(file).Decode(&items); // Decode the JSON file into the items array
 
 	if err != nil {
 		return nil, errors.New("An error has occured, while decoding data")

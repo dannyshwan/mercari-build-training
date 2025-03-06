@@ -225,7 +225,7 @@ func (s *Handlers) storeImage(image []byte) (filePath string, err error) {
 	// - store image
 	// - return the image file path
 	hash := sha256.Sum256(image)	// calculate the hash sum of the image
-	filePath = hex.EncodeToString(hash[:]) + ".jpg" // use .jpg as the image format
+	filePath = hex.EncodeToString(hash[:]) + ".jpg" // create new file path with the hash sum
 	hashedFilePath := filepath.Join(s.imgDirPath, filePath)
 	err = StoreImage(hashedFilePath, image)
 	if err != nil {
