@@ -40,6 +40,21 @@ func (m *MockItemRepository) EXPECT() *MockItemRepositoryMockRecorder {
 	return m.recorder
 }
 
+// GetAllItems mocks base method.
+func (m *MockItemRepository) GetAllItems(ctx context.Context) ([]*Item, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllItems", ctx)
+	ret0, _ := ret[0].([]*Item)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllItems indicates an expected call of GetAllItems.
+func (mr *MockItemRepositoryMockRecorder) GetAllItems(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllItems", reflect.TypeOf((*MockItemRepository)(nil).GetAllItems), ctx)
+}
+
 // Insert mocks base method.
 func (m *MockItemRepository) Insert(ctx context.Context, item *Item) error {
 	m.ctrl.T.Helper()
