@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -25,7 +26,7 @@ func (s Server) Run() int {
 	logger := slog.New(slog.NewJSONHandler(os.Stderr, nil))
 	slog.SetDefault(logger)
 	// STEP 4-6: set the log level to DEBUG
-	slog.SetLogLoggerLevel(slog.LevelInfo)
+	slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	// set up CORS settings
 	frontURL, found := os.LookupEnv("FRONT_URL")
@@ -41,7 +42,7 @@ func (s Server) Run() int {
 
 	// set up routes
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /", h.Hello)
+	mux.HandleFunc("GET /", h.GetItems)
 	mux.HandleFunc("POST /items", h.AddItem)
 	mux.HandleFunc("GET /images/{filename}", h.GetImage)
 
@@ -65,6 +66,12 @@ type Handlers struct {
 type HelloResponse struct {
 	Message string `json:"message"`
 }
+/* ************************************************* */
+/* STEP 4-3: Get all items types */
+/* ************************************************* */
+type GetAllItemsResponse struct {
+	Items []*Item `json:"items"`
+}
 
 // Hello is a handler to return a Hello, world! message for GET / .
 func (s *Handlers) Hello(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +85,7 @@ func (s *Handlers) Hello(w http.ResponseWriter, r *http.Request) {
 
 type AddItemRequest struct {
 	Name string `form:"name"`
-	// Category string `form:"category"` // STEP 4-2: add a category field
+	Category string `form:"category"` // STEP 4-2: add a category field
 	Image []byte `form:"image"` // STEP 4-4: add an image field
 }
 
@@ -91,9 +98,21 @@ func parseAddItemRequest(r *http.Request) (*AddItemRequest, error) {
 	req := &AddItemRequest{
 		Name: r.FormValue("name"),
 		// STEP 4-2: add a category field
+		Category: r.FormValue("category"),
 	}
 
 	// STEP 4-4: add an image field
+	f, _, err := r.FormFile("image") // get the image file
+	if err != nil {
+		return nil, errors.New("Failed to read form file") // return an error if the file is not found
+	}
+	defer f.Close() // close the file after the function ends
+ 
+	imageAsByteArray, err := io.ReadAll(f) // read the image file and convert it to a byte array
+	if err != nil {
+		return nil, errors.New("Failed to read image data")
+	}
+	req.Image = imageAsByteArray
 
 	// validate the request
 	if req.Name == "" {
@@ -101,8 +120,38 @@ func parseAddItemRequest(r *http.Request) (*AddItemRequest, error) {
 	}
 
 	// STEP 4-2: validate the category field
+	if req.Category == "" {
+		return nil, errors.New("category is required")
+	}
+	
 	// STEP 4-4: validate the image field
+	if len(req.Image) == 0 {
+		return nil, errors.New("image is required")
+	}
 	return req, nil
+}
+
+/* ************************************************* */
+/* STEP 4-3: Get all items */
+/* ************************************************* */
+func (s *Handlers) GetItems(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// STEP 4-3: Get all items
+	allItems, err := s.itemRepo.GetAllItems(ctx)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Set the response
+	resp := GetAllItemsResponse{Items: allItems}
+
+	err = json.NewEncoder(w).Encode(resp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 // AddItem is a handler to add a new item for POST /items .
@@ -116,17 +165,19 @@ func (s *Handlers) AddItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// STEP 4-4: uncomment on adding an implementation to store an image
-	// fileName, err := s.storeImage(req.Image)
-	// if err != nil {
-	// 	slog.Error("failed to store image: ", "error", err)
-	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 	return
-	// }
+	fileName, err := s.storeImage(req.Image)
+	if err != nil {
+		slog.Error("failed to store image: ", "error", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	item := &Item{
 		Name: req.Name,
 		// STEP 4-2: add a category field
-		// STEP 4-4: add an image field
+		Category: req.Category,
+		// STEP 4-4: add an image field]
+		Image: fileName,
 	}
 	message := fmt.Sprintf("item received: %s", item.Name)
 	slog.Info(message)
