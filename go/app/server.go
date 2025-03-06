@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -46,6 +47,7 @@ func (s Server) Run() int {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /", h.GetItems)
 	mux.HandleFunc("POST /items", h.AddItem)
+	mux.HandleFunc("GET /items/{itemId}", h.GetSingleItem)
 	mux.HandleFunc("GET /images/{filename}", h.GetImage)
 
 	// start the server
@@ -73,6 +75,13 @@ type HelloResponse struct {
 /* ************************************************* */
 type GetAllItemsResponse struct {
 	Items []*Item `json:"items"`
+}
+
+/* ************************************************* */
+/* STEP 4-5: Get single items types */
+/* ************************************************* */
+type GetSingleItemResponse struct {
+	Item Item `json:"item"`
 }
 
 // Hello is a handler to return a Hello, world! message for GET / .
@@ -230,6 +239,10 @@ type GetImageRequest struct {
 	FileName string // path value
 }
 
+type GetItemRequest struct {
+	ItemId int // path value
+}
+
 // parseGetImageRequest parses and validates the request to get an image.
 func parseGetImageRequest(r *http.Request) (*GetImageRequest, error) {
 	req := &GetImageRequest{
@@ -293,4 +306,37 @@ func (s *Handlers) buildImagePath(imageFileName string) (string, error) {
 	}
 
 	return imgPath, nil
+}
+
+
+/* ************************************************* */
+/* STEP 4-5: Get individual items */
+/* ************************************************* */
+func parseGetSingleItemRequest(r *http.Request) (*GetItemRequest, error) {
+	itemID := r.PathValue("itemId")
+	i, err := strconv.Atoi(itemID)
+	if err != nil {
+		return nil, errors.New("itemId is required")
+	}
+	req := &GetItemRequest{
+		ItemId: i,
+	}
+	return req, nil
+}
+
+func (s *Handlers) GetSingleItem(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	req, err := parseGetSingleItemRequest(r)
+	if err != nil {
+		slog.Error("failed to parse get item request: ", "error", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	resp, _ :=  s.itemRepo.GetItem(ctx, req.ItemId)
+	err = json.NewEncoder(w).Encode(resp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

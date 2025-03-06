@@ -55,6 +55,21 @@ func (mr *MockItemRepositoryMockRecorder) GetAllItems(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllItems", reflect.TypeOf((*MockItemRepository)(nil).GetAllItems), ctx)
 }
 
+// GetItem mocks base method.
+func (m *MockItemRepository) GetItem(ctx context.Context, itemId int) (*Item, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetItem", ctx, itemId)
+	ret0, _ := ret[0].(*Item)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetItem indicates an expected call of GetItem.
+func (mr *MockItemRepositoryMockRecorder) GetItem(ctx, itemId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetItem", reflect.TypeOf((*MockItemRepository)(nil).GetItem), ctx, itemId)
+}
+
 // Insert mocks base method.
 func (m *MockItemRepository) Insert(ctx context.Context, item *Item) error {
 	m.ctrl.T.Helper()

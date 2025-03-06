@@ -25,6 +25,7 @@ type Item struct {
 type ItemRepository interface {
 	Insert(ctx context.Context, item *Item) error
 	GetAllItems(ctx context.Context) ([]*Item, error)
+	GetItem(ctx context.Context, itemId int) (*Item, error)
 }
 
 // itemRepository is an implementation of ItemRepository
@@ -116,6 +117,23 @@ func (i *itemRepository) GetAllItems(ctx context.Context) ([]*Item, error) {
 
 	return items, nil
 }
+
+/* ************************************************* */
+/* STEP 4-5: Get single items */
+/* ************************************************* */
+// Insert inserts an item into the repository.
+func (i *itemRepository) GetItem(ctx context.Context, itemId int) (*Item, error) {
+
+	items, err := i.GetAllItems(ctx)
+
+	if err != nil {
+		return nil, errors.New("No items found")
+	}
+	returnItem := items[itemId]
+
+	return returnItem, nil
+}
+
 
 /* ************************************************* */
 /* STEP 4-4: Store Image */
