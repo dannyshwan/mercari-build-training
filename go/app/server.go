@@ -313,27 +313,27 @@ func (s *Handlers) buildImagePath(imageFileName string) (string, error) {
 /* STEP 4-5: Get individual items */
 /* ************************************************* */
 func parseGetSingleItemRequest(r *http.Request) (*GetItemRequest, error) {
-	itemID := r.PathValue("itemId")
-	i, err := strconv.Atoi(itemID)
+	itemID := r.PathValue("itemId") // Get itemId from path
+	i, err := strconv.Atoi(itemID) // Convert itemId to int
 	if err != nil {
 		return nil, errors.New("itemId is required")
 	}
 	req := &GetItemRequest{
 		ItemId: i,
 	}
-	return req, nil
+	return req, nil // Return ItemId
 }
 
 func (s *Handlers) GetSingleItem(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req, err := parseGetSingleItemRequest(r)
+	req, err := parseGetSingleItemRequest(r) // Get itemId from path
 	if err != nil {
 		slog.Error("failed to parse get item request: ", "error", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	resp, _ :=  s.itemRepo.GetItem(ctx, req.ItemId)
+	resp, _ :=  s.itemRepo.GetItem(ctx, req.ItemId) // Get item from existing list of items in items.json
 	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
